@@ -1,60 +1,126 @@
 #include <pebble.h>
+#define printf(...) APP_LOG(APP_LOG_LEVEL_DEBUG, __VA_ARGS__)
+
+enum {
+	INBOX_SIZE_KEY = 0,
+	RESPONSE_LENGTH_KEY = 1,
+	CHUNK_KEY = 2
+};
+
+typedef struct {
+	char *string;
+	char *start;
+	char *end;
+} Substr;
 
 static Window *window;
-static TextLayer *text_layer;
+static uint32_t response_length;
+static char *response;
 
-static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
-  text_layer_set_text(text_layer, "Select");
+static void create_window() {
+	window = window_create();
+	window_stack_push(window, true);
 }
 
-static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
-  text_layer_set_text(text_layer, "Up");
+static void destroy_window() {
+	window_destroy(window);
 }
 
-static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
-  text_layer_set_text(text_layer, "Down");
+static void set_response_length(DictionaryIterator *dict) {
+	Tuple *tuple = dict_find(dict, RESPONSE_LENGTH_KEY);
+	if (!tuple) return;
+	response_length = tuple->value->int32;
+	if (response) free(response);
+	response = malloc(response_length + 1);
 }
 
-static void click_config_provider(void *context) {
-  window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
-  window_single_click_subscribe(BUTTON_ID_UP, up_click_handler);
-  window_single_click_subscribe(BUTTON_ID_DOWN, down_click_handler);
+static void read_chunk(DictionaryIterator *dict) {
+	Tuple *tuple = dict_find(dict, CHUNK_KEY);
+	if (!tuple) return;
+	char *chunk = tuple->value->cstring;
+	strncat(response, chunk, response_length - strlen(response));
 }
 
-static void window_load(Window *window) {
-  Layer *window_layer = window_get_root_layer(window);
-  GRect bounds = layer_get_bounds(window_layer);
-
-  text_layer = text_layer_create((GRect) { .origin = { 0, 72 }, .size = { bounds.size.w, 20 } });
-  text_layer_set_text(text_layer, "Press a button");
-  text_layer_set_text_alignment(text_layer, GTextAlignmentCenter);
-  layer_add_child(window_layer, text_layer_get_layer(text_layer));
+static uint32_t substrlen(Substr range) {
+	return range.end - range.start + 1;
 }
 
-static void window_unload(Window *window) {
-  text_layer_destroy(text_layer);
+static char *substrcpy(char *destination, Substr range) {
+	uint32_t length = substrlen(range);
+	destination[length] = 0;
+	return strncpy(destination, range.start, length);
 }
 
-static void init(void) {
-  window = window_create();
-  window_set_click_config_provider(window, click_config_provider);
-  window_set_window_handlers(window, (WindowHandlers) {
-    .load = window_load,
-    .unload = window_unload,
-  });
-  const bool animated = true;
-  window_stack_push(window, animated);
+static Substr document_get_tag_content_range(char *doc, char *tag) {
+	Substr range = { .string = doc };
+
+	char tag_start[strlen(tag) + 2];
+	strcpy(tag_start, "<");
+
+	strcat(tag_start, tag);
+	char *tag_start_position = strstr(doc, tag_start);
+	char *tag_end_position = strstr(tag_start_position, ">");
+	range.start = tag_end_position + 1;
+
+	// currently just finds content until start of next tag
+	char *tag_close_position = strstr(tag_end_position, "<");
+	range.end = tag_close_position - 1;
+
+	return range;
 }
 
-static void deinit(void) {
-  window_destroy(window);
+static void display_document(char *document) {
+	// locate the start index of title.
+	// allow for any attributes
+
+	Substr title_range = document_get_tag_content_range(document, "title");
+	char title[substrlen(title_range) + 1];
+	substrcpy(title, title_range);
+
+	printf("Extracted title: '%s'", title);
 }
 
-int main(void) {
+static void on_message(DictionaryIterator *dict, void *context) {
+	set_response_length(dict);
+	read_chunk(dict);
+	if (strlen(response) == response_length) {
+		display_document(response);
+	}
+}
+
+/**
+ * Sends inbox size to phone as a
+ * little-endian byte array of length 4.
+ */
+static void broadcast_inbox_size(uint32_t size) {
+	DictionaryIterator *dict;
+	app_message_outbox_begin(&dict);
+	dict_write_data(dict, INBOX_SIZE_KEY, (uint8_t *)&size, 4);
+	dict_write_end(dict);
+	app_message_outbox_send();
+}
+
+static void init_app_message() {
+	uint32_t inbox_size = app_message_inbox_size_maximum();
+	uint32_t outbox_size = app_message_outbox_size_maximum();
+
+	app_message_register_inbox_received(on_message);
+	app_message_open(inbox_size, outbox_size);
+
+	broadcast_inbox_size(inbox_size);
+}
+
+static void init() {
+	init_app_message();
+	create_window();
+}
+
+static void deinit() {
+	destroy_window();
+}
+
+int main() {
   init();
-
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Done initializing, pushed window: %p", window);
-
   app_event_loop();
   deinit();
 }
