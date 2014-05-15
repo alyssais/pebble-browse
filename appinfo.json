@@ -9,7 +9,9 @@
     "watchface": false
   },
   "appKeys": {
-    "dummy": 0
+    "inboxSize": 0,
+    "responseLength": 1,
+    "chunk": 2
   },
   "resources": {
     "media": []
