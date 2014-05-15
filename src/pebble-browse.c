@@ -1,4 +1,6 @@
 #include <pebble.h>
+#include "substr.h"
+#include "document.h"
 #define printf(...) APP_LOG(APP_LOG_LEVEL_DEBUG, __VA_ARGS__)
 
 enum {
@@ -6,12 +8,6 @@ enum {
 	RESPONSE_LENGTH_KEY = 1,
 	CHUNK_KEY = 2
 };
-
-typedef struct {
-	char *string;
-	char *start;
-	char *end;
-} Substr;
 
 static Window *window;
 static uint32_t response_length;
@@ -41,42 +37,12 @@ static void read_chunk(DictionaryIterator *dict) {
 	strncat(response, chunk, response_length - strlen(response));
 }
 
-static uint32_t substrlen(Substr range) {
-	return range.end - range.start + 1;
-}
-
-static char *substrcpy(char *destination, Substr range) {
-	uint32_t length = substrlen(range);
-	destination[length] = 0;
-	return strncpy(destination, range.start, length);
-}
-
-static Substr document_get_tag_content_range(char *doc, char *tag) {
-	Substr range = { .string = doc };
-
-	char tag_start[strlen(tag) + 2];
-	strcpy(tag_start, "<");
-
-	strcat(tag_start, tag);
-	char *tag_start_position = strstr(doc, tag_start);
-	char *tag_end_position = strstr(tag_start_position, ">");
-	range.start = tag_end_position + 1;
-
-	// currently just finds content until start of next tag
-	char *tag_close_position = strstr(tag_end_position, "<");
-	range.end = tag_close_position - 1;
-
-	return range;
-}
-
 static void display_document(char *document) {
 	// locate the start index of title.
 	// allow for any attributes
-
 	Substr title_range = document_get_tag_content_range(document, "title");
 	char title[substrlen(title_range) + 1];
 	substrcpy(title, title_range);
-
 	printf("Extracted title: '%s'", title);
 }
 
