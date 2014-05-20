@@ -41,14 +41,13 @@ static void read_chunk(DictionaryIterator *dict) {
 	strncat(response, chunk, response_length - strlen(response));
 }
 
-
+// static char *test_str;
+// static TextLayer *test_text_layer;
 static void display_document(struct Document *document) {
-	// locate the start index of title.
-	// allow for any attributes
-	printf("displaying document %s", document_get_title(document));
-	Layer *document_layer = document_view_get_layer(document_get_view(document));
 	Layer *window_layer = window_get_root_layer(window);
-	layer_add_child(window_layer, document_layer);
+	struct DocumentView *view = document_get_view(document);
+	Layer *layer = document_view_layer_for_bounds(view, layer_get_bounds(window_layer));
+	layer_add_child(window_layer, layer);
 }
 
 static void on_message(DictionaryIterator *dict, void *context) {
