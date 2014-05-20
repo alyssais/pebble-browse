@@ -14,7 +14,7 @@ var sendMessage = function(message, callback) {
     // message has been sent successfully.
     var sendRemainingChunks = function() {
       var chunk = chunkQueue[0];
-      if (!chunk) return callback();
+      if (!chunk) return callback && callback();
       Pebble.sendAppMessage({chunk: chunk}, function() {
         // chunk sent successfully, remove from array
         chunkQueue.shift();
