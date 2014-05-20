@@ -1,6 +1,8 @@
 #include <pebble.h>
 #include "substr.h"
 #include "document.h"
+
+// Old habits die hard.
 #define printf(...) APP_LOG(APP_LOG_LEVEL_DEBUG, __VA_ARGS__)
 
 enum {
@@ -12,6 +14,7 @@ enum {
 static Window *window;
 static uint32_t response_length;
 static char *response;
+static struct Document *current_document;
 
 static void create_window() {
 	window = window_create();
@@ -28,6 +31,7 @@ static void set_response_length(DictionaryIterator *dict) {
 	response_length = tuple->value->int32;
 	if (response) free(response);
 	response = malloc(response_length + 1);
+	printf("response length: %lu", response_length);
 }
 
 static void read_chunk(DictionaryIterator *dict) {
@@ -37,20 +41,22 @@ static void read_chunk(DictionaryIterator *dict) {
 	strncat(response, chunk, response_length - strlen(response));
 }
 
-static void display_document(char *document) {
+
+static void display_document(struct Document *document) {
 	// locate the start index of title.
 	// allow for any attributes
-	Substr title_range = document_get_tag_content_range(document, "title");
-	char title[substrlen(title_range) + 1];
-	substrcpy(title, title_range);
-	printf("Extracted title: '%s'", title);
+	printf("displaying document %s", document_get_title(document));
+	Layer *document_layer = document_view_get_layer(document_get_view(document));
+	Layer *window_layer = window_get_root_layer(window);
+	layer_add_child(window_layer, document_layer);
 }
 
 static void on_message(DictionaryIterator *dict, void *context) {
 	set_response_length(dict);
 	read_chunk(dict);
 	if (strlen(response) == response_length) {
-		display_document(response);
+		current_document = document_create(response, NULL);
+		display_document(current_document);
 	}
 }
 
@@ -83,6 +89,7 @@ static void init() {
 
 static void deinit() {
 	destroy_window();
+	if (response) free(response);
 }
 
 int main() {
