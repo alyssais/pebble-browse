@@ -34,9 +34,7 @@ var HTTP = new function() {
     request.open("GET", url, true);
     request.onload = function() {
       if (this.status >= 200 && this.status < 400) {
-        sendMessage(this.response, function() {
-          console.log("sent message");
-        });
+        sendMessage(this.response);
       }
     };
     request.send();
