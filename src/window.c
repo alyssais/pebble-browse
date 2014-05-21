@@ -14,7 +14,7 @@ void window_display_document(struct Document *document) {
 }
 
 void window_init(void) {
-	window = window_create(void);
+	window = window_create();
 	window_stack_push(window, true);
 }
 

@@ -47,7 +47,7 @@ void broadcast_inbox_size(uint32_t size) {
 	app_message_outbox_begin(&dict);
 	dict_write_data(dict, INBOX_SIZE_KEY, (uint8_t *)&size, 4);
 	dict_write_end(dict);
-	app_message_outbox_send(void);
+	app_message_outbox_send();
 }
 
 void http_get(char *url) {
@@ -58,19 +58,19 @@ void http_get(char *url) {
 	app_message_outbox_begin(&dict);
 	dict_write_cstring(dict, URL_KEY, current_url);
 	dict_write_end(dict);
-	app_message_outbox_send(void);
+	app_message_outbox_send();
 }
 
 void on_sent(DictionaryIterator *dict, void *context) {
-	if (init_callback) init_callback(void);
+	if (init_callback) init_callback();
 	init_callback = NULL;
 }
 
 void http_init(HttpInitCallback *callback) {
 	init_callback = callback;
 
-	uint32_t inbox_size = app_message_inbox_size_maximum(void);
-	uint32_t outbox_size = app_message_outbox_size_maximum(void);
+	uint32_t inbox_size = app_message_inbox_size_maximum();
+	uint32_t outbox_size = app_message_outbox_size_maximum();
 
 	app_message_register_inbox_received(on_message);
 	app_message_register_outbox_sent(on_sent);

@@ -9,16 +9,16 @@ static void request_page(void) {
 static void init(void) {
 	http_init(request_page);
 	http_set_document_handler(window_display_document);
-	window_init(void);
+	window_init();
 }
 
 static void deinit(void) {
-	window_deinit(void);
-	http_deinit(void);
+	window_deinit();
+	http_deinit();
 }
 
 int main(void) {
-	init(void);
-	app_event_loop(void);
-	deinit(void);
+	init();
+	app_event_loop();
+	deinit();
 }
