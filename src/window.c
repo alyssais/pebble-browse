@@ -13,12 +13,12 @@ void window_display_document(struct Document *document) {
 	layer_add_child(window_layer, layer);
 }
 
-void window_init() {
-	window = window_create();
+void window_init(void) {
+	window = window_create(void);
 	window_stack_push(window, true);
 }
 
-void window_deinit() {
+void window_deinit(void) {
 	if (current_document) document_free(current_document);
 	window_destroy(window);
 }
