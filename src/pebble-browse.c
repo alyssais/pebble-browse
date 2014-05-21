@@ -3,9 +3,6 @@
 #include "document.h"
 #include "http.h"
 
-// Old habits die hard.
-#define printf(...) APP_LOG(APP_LOG_LEVEL_DEBUG, __VA_ARGS__)
-
 static Window *window;
 
 static void create_window() {
@@ -24,8 +21,12 @@ static void display_document(struct Document *document) {
 	layer_add_child(window_layer, layer);
 }
 
+static void request_page() {
+	http_get("http://alyssa.is");
+}
+
 static void init() {
-	http_init();
+	http_init(request_page);
 	http_set_document_handler(display_document);
 	create_window();
 }

@@ -11,7 +11,8 @@
   "appKeys": {
     "inboxSize": 0,
     "responseLength": 1,
-    "chunk": 2
+    "chunk": 2,
+    "url": 3
   },
   "resources": {
     "media": []

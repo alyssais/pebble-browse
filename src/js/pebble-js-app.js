@@ -50,7 +50,9 @@ Pebble.addEventListener("appmessage", function(e) {
       while (string.length < 8) string = "0" + string;
       return string;
     }).join(""), 2);
+  }
 
-    HTTP.get('http://alyssa.is');
+  if (e.payload.url) {
+    HTTP.get(e.payload.url);
   }
 });
