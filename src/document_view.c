@@ -1,4 +1,3 @@
-// #include <pebble.h>
 #include "document.h"
 #include "document_view.h"
 

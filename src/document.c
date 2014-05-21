@@ -54,8 +54,8 @@ char *document_copy_title(struct Document *self) {
 }
 
 void document_free(struct Document *self) {
-  free(self->view);
-  free(self->content);
+  document_view_free(self->view);
+  // content is owned by HTTP
   free(self->url);
   free(self->title);
   free(self);
