@@ -1,5 +1,7 @@
 # pebble-browse
 
+[![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)
+
 This is a rudimentary web browser for the [Pebble smartwatch](https://getpebble.com).
 
 Currently, it can load a web page (the URL is hardcoded), and extract and display the `<title>`.
